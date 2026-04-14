@@ -5,49 +5,59 @@ import { Canvas } from "@react-three/fiber";
 import { ContactShadows, Html, OrbitControls } from "@react-three/drei";
 import ModelViewer from "./ModelViewer";
 
-type Outfit = {
+type AvatarModel = {
   id: string;
   label: string;
   path: string;
   scale?: number;
+  rotationOffset?: [number, number, number];
   position?: [number, number, number];
   rotationY?: number;
+  defaultShirtColor: string;
 };
 
-const outfits: Outfit[] = [
+const avatars: AvatarModel[] = [
   {
-    id: "look-1",
-    label: "Blue Shirt",
-    path: "/models/look-1.glb",
-    scale: 1.2,
+    id: "nathan",
+    label: "Nathan",
+    path: "/models/rp_nathan_animated_003_walking.glb",
+    scale: 0.9,
+    rotationOffset: [0, 0, 0],
     position: [0, -1.1, 0],
     rotationY: Math.PI,
+    defaultShirtColor: "#d9488b",
   },
-//   {
-//     id: "look-2",
-//     label: "Black Tee",
-//     path: "/models/look-2.glb",
-//     scale: 1.2,
-//     position: [0, -1.1, 0],
-//     rotationY: Math.PI,
-//   },
-//   {
-//     id: "look-3",
-//     label: "Casual Look",
-//     path: "/models/look-3.glb",
-//     scale: 1.2,
-//     position: [0, -1.1, 0],
-//     rotationY: Math.PI,
-//   },
+  {
+    id: "sophia",
+    label: "Sophia",
+    path: "/models/rp_sophia_animated_003_idling.glb",
+    scale: 0.9,
+    rotationOffset: [-Math.PI / 2, 0, 0],
+    position: [0, -1.1, 0],
+    rotationY: Math.PI,
+    defaultShirtColor: "#7c3aed",
+  },
 ];
 
 export default function AvatarDemo() {
-  const [selected, setSelected] = useState<Outfit>(outfits[0]);
+  const [selected, setSelected] = useState<AvatarModel>(avatars[0]);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [shirtColor, setShirtColor] = useState("#d9488b");
+  const [shirtColors, setShirtColors] = useState<Record<string, string>>({
+    nathan: avatars[0].defaultShirtColor,
+    sophia: avatars[1].defaultShirtColor,
+  });
 
-  const leftItems = outfits.slice(0, 1);
-  const rightItems = outfits.slice(1);
+  const shirtColor = shirtColors[selected.id] ?? selected.defaultShirtColor;
+  const setCurrentShirtColor = (value: string) => {
+    setShirtColors((current) => ({
+      ...current,
+      [selected.id]: value,
+    }));
+  };
+
+  const midpoint = Math.ceil(avatars.length / 2);
+  const leftItems = avatars.slice(0, midpoint);
+  const rightItems = avatars.slice(midpoint);
 
   return (
     <div style={pageStyle}>
@@ -89,7 +99,7 @@ export default function AvatarDemo() {
                 key={swatch}
                 type="button"
                 aria-label={`Set shirt color to ${swatch}`}
-                onClick={() => setShirtColor(swatch)}
+                onClick={() => setCurrentShirtColor(swatch)}
                 style={{
                   ...swatchButtonStyle,
                   background: swatch,
@@ -105,7 +115,7 @@ export default function AvatarDemo() {
               <input
                 type="color"
                 value={shirtColor}
-                onChange={(event) => setShirtColor(event.target.value)}
+                onChange={(event) => setCurrentShirtColor(event.target.value)}
                 aria-label="Choose custom shirt color"
                 style={colorInputStyle}
               />
@@ -124,6 +134,7 @@ export default function AvatarDemo() {
             <ModelViewer
               url={selected.path}
               scale={selected.scale}
+              rotationOffset={selected.rotationOffset}
               position={selected.position}
               rotationY={selected.rotationY}
               isPlaying={isPlaying}

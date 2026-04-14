@@ -3,13 +3,14 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, Group, Mesh } from "three";
+import { Box3, Color, Group, Mesh, Vector3 } from "three";
 import type { AnimationAction } from "three";
 import { SkeletonUtils } from "three-stdlib";
 
 type ModelViewerProps = {
   url: string;
   scale?: number;
+  rotationOffset?: [number, number, number];
   position?: [number, number, number];
   rotationY?: number;
   isPlaying?: boolean;
@@ -19,6 +20,7 @@ type ModelViewerProps = {
 export default function ModelViewer({
   url,
   scale = 1,
+  rotationOffset = [0, 0, 0],
   position = [0, -1.1, 0],
   rotationY = Math.PI,
   isPlaying = true,
@@ -30,8 +32,21 @@ export default function ModelViewer({
   const { scene, animations } = useGLTF(url);
 
   const clonedScene = useMemo(() => {
-    return SkeletonUtils.clone(scene);
-  }, [scene]);
+    const clone = SkeletonUtils.clone(scene);
+
+    clone.rotation.set(rotationOffset[0], rotationOffset[1], rotationOffset[2]);
+    clone.updateMatrixWorld(true);
+
+    // Normalize the imported asset so its base sits on the floor and the
+    // model is centered around the scene origin. Display size stays explicit
+    // in the avatar registry so we do not derive scale from animated bounds.
+    const bounds = new Box3().setFromObject(clone);
+    const center = new Vector3();
+    bounds.getCenter(center);
+
+    clone.position.set(-center.x, -bounds.min.y, -center.z);
+    return clone;
+  }, [rotationOffset, scene]);
 
   const { actions, names } = useAnimations(animations, clonedScene);
 
